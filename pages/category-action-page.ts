@@ -6,7 +6,7 @@ export class ActionCategory {
   readonly showMoreButton: Locator;
   readonly showMoreGamesButton: Locator;
   readonly gamePrice: Locator;
-  readonly addToCart: Locator;
+  readonly gameTitle: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -14,7 +14,7 @@ export class ActionCategory {
     this.showMoreButton = page.locator('.ShowContentsButton');
     this.showMoreGamesButton = page.locator('._3d9cKhzXJMPBYzFkB_IaRp');
     this.gamePrice = page.locator('.hWbTIbfDv_T6qCKW7NQHG .Wh0L8EnwsPV_8VAu8TOYr');
-    this.addToCart = page.locator('.CartBtn');
+    this.gameTitle = page.locator('._1F4bcsKc9FjeWQ2TX8CWDe a');
 
   }
   
@@ -22,7 +22,7 @@ export class ActionCategory {
     await this.page.locator('//*[@id="SaleSection_13268"]//*[contains(@class, "Dhg57Pg1m91mAChUNE5_V")]').getByText(`${name}`).click();
   }
 
-  async findGameToSelect () {
+  async findGameWithMaxDiscount() {
     let gamesWithDiscount = await this.getNumberOfGamesWithDiscount();
     let array: any[] = [];
     let item;
@@ -33,20 +33,23 @@ export class ActionCategory {
         
             array.push(parseInt(item));
         }
-        array.sort((a, b) => a - b);
-    } else {
-        let numberOfGames = await this.getNubmerOfGames();
-
-        for (let i = 0; i < numberOfGames; i++) {
-            item  = await this.gamePrice.nth(i).textContent();
-
-            item = parseFloat(item.slice(1, item.length + 1));
-
-            isFinite(item) ? array.push(item) : array;
-        }
-        array.sort((a, b) => b - a);
     }
-    return array[0];
+    return (array.length === 0) ? null : array.sort((a, b) => a - b)[0];
+  }
+
+  async findGameWithMaxPrice() {
+    let numberOfGames = await this.getNubmerOfGames();
+    let array: any[] = [];
+    let item;
+
+    for (let i = 0; i < numberOfGames; i++) {
+        item  = await this.gamePrice.nth(i).textContent();
+
+        item = parseFloat(item.slice(1, item.length + 1));
+
+        isFinite(item) ? array.push(item) : array;
+    }
+    return array.sort((a, b) => b - a)[0];
   }
 
   async getNumberOfGamesWithDiscount() {
@@ -57,18 +60,19 @@ export class ActionCategory {
     return await this.gamePrice.count();
   }
 
-  async selectGame(value) {
-    let numberOfGames = await this.getNubmerOfGames()
+  async selectGamewithMaxDiscount(value) {
     let gamesWithDiscount = await this.getNumberOfGamesWithDiscount();
 
-    if (await this.discount.count() > 0) {
-       for (let i = 0; i < gamesWithDiscount; i++) {
-        if (await this.discount.nth(i).textContent() == value) this.addToCart.nth(i).click();
-       }
-    } else {
-      for (let i = 0; i < numberOfGames; i++) {
-        if (await this.gamePrice.nth(i).textContent() == value) this.addToCart.nth(i).click();
-      }
+    for (let i = 0; i < gamesWithDiscount; i++) {
+      if (await this.discount.nth(i).textContent() == value) this.gameTitle.nth(i).click();
+    }
+  }
+
+  async selectGameWithMaxPrice(value) {
+    let numberOfGames = await this.getNubmerOfGames()
+
+    for (let i = 0; i < numberOfGames; i++) {
+      if (await this.gamePrice.nth(i).textContent() == value) this.gameTitle.nth(i).click();
     }
   }
 
